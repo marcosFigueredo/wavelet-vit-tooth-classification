@@ -12,6 +12,11 @@ from src.dataset import ToothCropDataset
 from src.models import WaveletViT
 
 def train_model(config_path):
+    if torch.cuda.is_available() is False:
+        num_cores = os.cpu_count() or 8
+        torch.set_num_threads(num_cores)
+        print(f"Configured PyTorch CPU threads: {num_cores}")
+        
     cfg = load_config(config_path)
     set_seed(cfg.get('seed', 42))
     device = get_device()

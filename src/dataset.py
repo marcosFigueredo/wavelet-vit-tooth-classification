@@ -11,10 +11,11 @@ class ToothCropDataset(Dataset):
     Structure:
         data/crops/{split}/class_{0..8}/*.jpg
     """
-    def __init__(self, root_dir, split='train', transform=None, wavelet_transform=None):
+    def __init__(self, root_dir, split='train', transform=None, wavelet_transform=None, preload_memory=True):
         self.root_dir = os.path.join(root_dir, split)
         self.split = split
         self.wavelet_transform = wavelet_transform
+        self.preload_memory = preload_memory
         
         self.samples = []
         self.class_counts = {c: 0 for c in range(9)}
@@ -46,12 +47,25 @@ class ToothCropDataset(Dataset):
         else:
             self.transform = transform
 
+        # Preload all images in RAM to prevent disk I/O and cloud drive sync conflicts
+        self.cached_images = []
+        if self.preload_memory:
+            print(f"Preloading {len(self.samples)} {split} images into RAM...")
+            for img_path, _ in self.samples:
+                with Image.open(img_path) as img:
+                    self.cached_images.append(img.convert('RGB').copy())
+            print(f"Preloading for {split} complete!")
+
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        img_path, label = self.samples[idx]
-        image = Image.open(img_path).convert('RGB')
+        if self.preload_memory:
+            image = self.cached_images[idx]
+            _, label = self.samples[idx]
+        else:
+            img_path, label = self.samples[idx]
+            image = Image.open(img_path).convert('RGB')
         
         img_tensor = self.transform(image) # [3, 224, 224]
         
