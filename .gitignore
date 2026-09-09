@@ -3,13 +3,25 @@ __pycache__/
 *.py[cod]
 *.class
 
-# Large generated crop datasets (can be regenerated with 'python -m src.prepare_dataset')
-data/crops/
-
 # PyTorch checkpoints / model weights
 *.pt
 *.pth
 results/checkpoints/
+
+# Dataset files and generated preprocessing artifacts
+code/images/
+code/labels/
+data/crops/
+data/splits/
+results/figures/
+results/tables/
+
+# Experiment trackers and test caches
+wandb/
+mlruns/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Virtual environments
 venv/
