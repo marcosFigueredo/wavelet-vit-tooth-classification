@@ -20,6 +20,16 @@ def set_seed(seed=42):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
+def prevent_sleep():
+    """Informs the OS kernel that background training is active to prevent sleep/suspension."""
+    if os.name == 'nt':
+        import ctypes
+        ES_CONTINUOUS = 0x80000000
+        ES_SYSTEM_REQUIRED = 0x00000001
+        ES_AWAYMODE_REQUIRED = 0x00000040
+        ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED)
+        print(">> Windows Continuous Execution Lock Active (Sleep/Standby prevented during training).")
+
 def get_device():
     """Return available compute device (cuda if available else cpu)."""
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')

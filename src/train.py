@@ -6,12 +6,13 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.utils import set_seed, get_device, load_config, compute_class_weights, calculate_metrics, plot_training_history
+from src.utils import set_seed, prevent_sleep, get_device, load_config, compute_class_weights, calculate_metrics, plot_training_history
 from src.wavelet import WaveletTransform2D
 from src.dataset import ToothCropDataset
 from src.models import WaveletViT
 
 def train_model(config_path):
+    prevent_sleep()
     if torch.cuda.is_available() is False:
         num_cores = os.cpu_count() or 8
         torch.set_num_threads(num_cores)
