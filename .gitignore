@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+
+# Large generated crop datasets (can be regenerated with 'python -m src.prepare_dataset')
+data/crops/
+
+# PyTorch checkpoints / model weights
+*.pt
+*.pth
+results/checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDEs and OS files
+.vscode/
+.idea/
+.qodo/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# System logs
+*.log
