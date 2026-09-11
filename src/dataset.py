@@ -50,8 +50,8 @@ class ToothCropDataset(Dataset):
         # Precompute and cache all tensors in RAM for ultra-fast GPU throughput
         self.cached_tensors = []
         if self.preload_memory:
-            print(f"Precomputing and caching {len(self.samples)} {split} tensors in RAM...")
-            for img_path, _ in self.samples:
+            from tqdm import tqdm
+            for img_path, _ in tqdm(self.samples, desc=f"Loading & Wavelet precompute ({split})", leave=False):
                 with Image.open(img_path) as img:
                     img_rgb = img.convert('RGB')
                     t = self.transform(img_rgb)
@@ -59,7 +59,7 @@ class ToothCropDataset(Dataset):
                         with torch.no_grad():
                             t = self.wavelet_transform(t.unsqueeze(0)).squeeze(0)
                     self.cached_tensors.append(t)
-            print(f"Caching for {split} complete! ({len(self.cached_tensors)} tensors in RAM)")
+            print(f"Precomputation for {split} complete! ({len(self.cached_tensors)} tensors ready in RAM)")
 
     def __len__(self):
         return len(self.samples)
