@@ -1,10 +1,10 @@
 batch_size: 32
 data_dir: data/crops
-epochs: 25
+epochs: 8
 experiment_name: ablation_haar_ll
 lr: 0.0001
 model_name: vit_b_16
-patience: 7
+patience: 3
 pretrained: true
 seed: 42
 wavelet:

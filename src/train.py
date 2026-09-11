@@ -64,12 +64,13 @@ def train_model(config_path):
     weight_decay = float(cfg.get('weight_decay', 1e-4))
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     
-    epochs = cfg.get('epochs', 35)
+    epochs = cfg.get('epochs', 8)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
+    scaler = torch.cuda.amp.GradScaler(enabled=(device.type == 'cuda'))
     
     # Tracking
     best_val_f1 = 0.0
-    patience = cfg.get('patience', 10)
+    patience = cfg.get('patience', 3)
     patience_counter = 0
     
     history = {'train_loss': [], 'val_loss': [], 'train_f1': [], 'val_f1': []}
@@ -77,7 +78,7 @@ def train_model(config_path):
     save_dir = os.path.join('results/checkpoints', exp_name)
     os.makedirs(save_dir, exist_ok=True)
     
-    print(f"\nStarting training for {exp_name} ({epochs} epochs)...")
+    print(f"\nStarting training for {exp_name} ({epochs} epochs with AMP={device.type == 'cuda'})...")
     for epoch in range(1, epochs + 1):
         model.train()
         train_loss = 0.0
@@ -86,10 +87,14 @@ def train_model(config_path):
         for imgs, labels in tqdm(train_loader, desc=f"Epoch {epoch}/{epochs} [Train]", leave=False):
             imgs, labels = imgs.to(device), labels.to(device)
             optimizer.zero_grad()
-            outputs = model(imgs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            
+            with torch.cuda.amp.autocast(enabled=(device.type == 'cuda')):
+                outputs = model(imgs)
+                loss = criterion(outputs, labels)
+                
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             
             train_loss += loss.item() * imgs.size(0)
             preds = torch.argmax(outputs, dim=1)
@@ -107,8 +112,9 @@ def train_model(config_path):
         with torch.no_grad():
             for imgs, labels in val_loader:
                 imgs, labels = imgs.to(device), labels.to(device)
-                outputs = model(imgs)
-                loss = criterion(outputs, labels)
+                with torch.cuda.amp.autocast(enabled=(device.type == 'cuda')):
+                    outputs = model(imgs)
+                    loss = criterion(outputs, labels)
                 val_loss += loss.item() * imgs.size(0)
                 preds = torch.argmax(outputs, dim=1)
                 y_val_true.extend(labels.cpu().numpy())
