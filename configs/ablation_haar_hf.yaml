@@ -1,15 +1,15 @@
-experiment_name: "ablation_haar_hf"
-seed: 42
-model_name: "vit_b_16"
-pretrained: true
-batch_size: 16
-epochs: 35
+batch_size: 32
+data_dir: data/crops
+epochs: 25
+experiment_name: ablation_haar_hf
 lr: 0.0001
-weight_decay: 0.0001
-weighted_loss: true
-patience: 10
-data_dir: "data/crops"
+model_name: vit_b_16
+patience: 7
+pretrained: true
+seed: 42
 wavelet:
   enabled: true
-  name: "haar"
-  mode: "hf"
+  mode: hf
+  name: haar
+weight_decay: 0.0001
+weighted_loss: true

@@ -47,30 +47,32 @@ class ToothCropDataset(Dataset):
         else:
             self.transform = transform
 
-        # Preload all images in RAM to prevent disk I/O and cloud drive sync conflicts
-        self.cached_images = []
+        # Precompute and cache all tensors in RAM for ultra-fast GPU throughput
+        self.cached_tensors = []
         if self.preload_memory:
-            print(f"Preloading {len(self.samples)} {split} images into RAM...")
+            print(f"Precomputing and caching {len(self.samples)} {split} tensors in RAM...")
             for img_path, _ in self.samples:
                 with Image.open(img_path) as img:
-                    self.cached_images.append(img.convert('RGB').copy())
-            print(f"Preloading for {split} complete!")
+                    img_rgb = img.convert('RGB')
+                    t = self.transform(img_rgb)
+                    if self.wavelet_transform is not None:
+                        with torch.no_grad():
+                            t = self.wavelet_transform(t.unsqueeze(0)).squeeze(0)
+                    self.cached_tensors.append(t)
+            print(f"Caching for {split} complete! ({len(self.cached_tensors)} tensors in RAM)")
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
         if self.preload_memory:
-            image = self.cached_images[idx]
-            _, label = self.samples[idx]
-        else:
-            img_path, label = self.samples[idx]
-            image = Image.open(img_path).convert('RGB')
+            return self.cached_tensors[idx], self.samples[idx][1]
         
+        img_path, label = self.samples[idx]
+        image = Image.open(img_path).convert('RGB')
         img_tensor = self.transform(image) # [3, 224, 224]
         
         if self.wavelet_transform is not None:
-            # Add batch dimension, transform, then squeeze
             with torch.no_grad():
                 img_tensor = self.wavelet_transform(img_tensor.unsqueeze(0)).squeeze(0)
                 

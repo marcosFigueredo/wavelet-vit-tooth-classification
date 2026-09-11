@@ -1,13 +1,13 @@
-experiment_name: "vit_rgb_baseline"
-seed: 42
-model_name: "vit_b_16"
-pretrained: true
-batch_size: 16
-epochs: 35
+batch_size: 32
+data_dir: data/crops
+epochs: 25
+experiment_name: vit_rgb_baseline
 lr: 0.0001
-weight_decay: 0.0001
-weighted_loss: true
-patience: 10
-data_dir: "data/crops"
+model_name: vit_b_16
+patience: 7
+pretrained: true
+seed: 42
 wavelet:
   enabled: false
+weight_decay: 0.0001
+weighted_loss: true
