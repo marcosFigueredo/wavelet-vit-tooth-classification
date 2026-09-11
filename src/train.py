@@ -64,13 +64,13 @@ def train_model(config_path):
     weight_decay = float(cfg.get('weight_decay', 1e-4))
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     
-    epochs = cfg.get('epochs', 8)
+    epochs = cfg.get('epochs', 25)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
-    scaler = torch.cuda.amp.GradScaler(enabled=(device.type == 'cuda'))
+    scaler = torch.amp.GradScaler('cuda', enabled=(device.type == 'cuda'))
     
     # Tracking
     best_val_f1 = 0.0
-    patience = cfg.get('patience', 3)
+    patience = cfg.get('patience', 8)
     patience_counter = 0
     
     history = {'train_loss': [], 'val_loss': [], 'train_f1': [], 'val_f1': []}
@@ -88,7 +88,7 @@ def train_model(config_path):
             imgs, labels = imgs.to(device), labels.to(device)
             optimizer.zero_grad()
             
-            with torch.cuda.amp.autocast(enabled=(device.type == 'cuda')):
+            with torch.amp.autocast('cuda', enabled=(device.type == 'cuda')):
                 outputs = model(imgs)
                 loss = criterion(outputs, labels)
                 
@@ -112,7 +112,7 @@ def train_model(config_path):
         with torch.no_grad():
             for imgs, labels in val_loader:
                 imgs, labels = imgs.to(device), labels.to(device)
-                with torch.cuda.amp.autocast(enabled=(device.type == 'cuda')):
+                with torch.amp.autocast('cuda', enabled=(device.type == 'cuda')):
                     outputs = model(imgs)
                     loss = criterion(outputs, labels)
                 val_loss += loss.item() * imgs.size(0)
